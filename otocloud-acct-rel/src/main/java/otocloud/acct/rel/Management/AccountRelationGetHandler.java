@@ -19,16 +19,16 @@ import io.vertx.ext.sql.SQLConnection;
  * @author lijing
  *
  */
-public class AccountPartnerGetHandler extends OtoCloudEventHandlerImpl<JsonObject> {
+public class AccountRelationGetHandler extends OtoCloudEventHandlerImpl<JsonObject> {
 
-	public static final String ACCOUNT_PARTNER_GET = "partner.get";
+	public static final String ADDRESS = "account_rel.get";
 	
 	/**
 	 * Constructor.
 	 *
 	 * @param componentImpl
 	 */
-	public AccountPartnerGetHandler(OtoCloudComponentImpl componentImpl) {
+	public AccountRelationGetHandler(OtoCloudComponentImpl componentImpl) {
 		super(componentImpl);
 	}
 
@@ -36,17 +36,23 @@ public class AccountPartnerGetHandler extends OtoCloudEventHandlerImpl<JsonObjec
 	public void handle(OtoCloudBusMessage<JsonObject> msg) {
 		JsonObject body = msg.body();
 		
-		componentImpl.getLogger().info(body.toString());
-		
-		JsonObject acctRegInfo = body.getJsonObject("content");
-		JsonObject sessionInfo = body.getJsonObject("session",null);
-		
-		Integer accId = sessionInfo.getInteger("acctId");
+		//componentImpl.getLogger().info(body.toString());		
 	
-		Integer appId = acctRegInfo.getInteger("appId");
-		Integer bizRoleRelId = acctRegInfo.getInteger("bizRoleRelId");
-		Boolean isReverse = acctRegInfo.getBoolean("isReverse");
+		Integer accId = body.getInteger("acctId");
+		String biz_direction = body.getString("biz_direction");
+		Integer biz_role_rel_id = body.getInteger("biz_role_rel_id");
 		
+		JsonArray paramsArray = new JsonArray();
+		paramsArray.add(accId).add(biz_role_rel_id);
+		
+		String sqlString = "";
+		if(biz_direction.equals("from")){
+			sqlString = "SELECT to_org_acct_id as acct,to_biz_role_id as role FROM org_acct_rel WHERE from_org_acct_id=? AND biz_role_rel_id=?";		
+		}else{
+			sqlString = "SELECT from_org_acct_id as acct,from_biz_role_id as role FROM org_acct_rel WHERE to_org_acct_id=? AND biz_role_rel_id=?";
+		}
+		
+		final String innerSql = sqlString;
 		
 		JDBCClient sqlClient = componentImpl.getSysDatasource().getSqlClient();
 		
@@ -61,11 +67,7 @@ public class AccountPartnerGetHandler extends OtoCloudEventHandlerImpl<JsonObjec
 	  	    		  componentImpl.getLogger().error(replyMsg, err);
 	  	    		  msg.fail(400, replyMsg);
 				  }else{										
-					conn.queryWithParams("SELECT to_org_acct_id,acct_name from view_app_inst_acct_rel WHERE org_acct_id=? AND app_module_id=? AND biz_role_rel_id=? AND is_reverse=?", 
-							   new JsonArray().add(accId)
-											  .add(appId)
-											  .add(bizRoleRelId)
-											  .add(isReverse ? 1 : 0),											  
+					conn.queryWithParams(innerSql, paramsArray,											  
 					  toRoleAcc->{								  
 						  if (toRoleAcc.succeeded()) {
 							List<JsonObject> ret = toRoleAcc.result().getRows();
@@ -130,7 +132,7 @@ public class AccountPartnerGetHandler extends OtoCloudEventHandlerImpl<JsonObjec
 	 */
 	@Override
 	public String getEventAddress() {
-		return ACCOUNT_PARTNER_GET;
+		return ADDRESS;
 	}
 
 }

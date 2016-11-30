@@ -26,6 +26,9 @@ public class AccountBizRelationManagement extends OtoCloudComponentImpl {
 		AccountPartnerGetHandler accountPartnerGetHandler = new AccountPartnerGetHandler(this);
 		ret.add(accountPartnerGetHandler);		
 		
+		AccountRelationGetHandler accountRelationGetHandler = new AccountRelationGetHandler(this);
+		ret.add(accountRelationGetHandler);
+		
 		return ret;
 	}
 }

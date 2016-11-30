@@ -10,7 +10,7 @@ import otocloud.framework.core.OtoCloudServiceForVerticleImpl;
 
 
 /**
- * Hello world!
+ * 商业关系服务
  *
  */
 public class BizRelationService extends OtoCloudServiceForVerticleImpl {
@@ -33,5 +33,17 @@ public class BizRelationService extends OtoCloudServiceForVerticleImpl {
 	public String getServiceName() {
 		return "otocloud-acct-rel";
 	}
+	
+	
+    public static void main( String[] args )
+    {
+    	BizRelationService app = new BizRelationService();
+
+    	OtoCloudServiceForVerticleImpl.internalMain("log4j2.xml",
+    										"otocloud-acct-rel.json", 
+    										app);
+    	
+    }   
+
 	
 }

@@ -1,25 +1,27 @@
 {
-    "main": "otocloud.acct.rel.BizRelationService",
-    "options": {
-        "config" :  {
-        	 "service_name": "otocloud-acct-rel",
-             "sys_datasource": {
-			    "sharedpool": "jdbc-psc",
-			    "config": {
-					  "url": "jdbc:mysql://10.10.23.112:3306/121db_new?useUnicode=true&characterEncoding=UTF-8",
-					  "driver_class": "com.mysql.jdbc.Driver",
-					  "max_pool_size": 30,
-					  "user": "test",
-					  "password": "test"
-				}
-			 },
-        	 "component_deployment": [
-		 	 ],
-		 	 "component_common": {
-			  },	  
-			  "component_config": { 
-     	 	  }
-		 	    
-		 }
-    }
+	"options": {
+		"config": {
+			"sys_datasource": {
+				"config": {
+					"max_pool_size": 30,
+					"password": "root",
+					"driver_class": "com.mysql.jdbc.Driver",
+					"user": "root",
+					"url": "jdbc:mysql://localhost:3306/121db_new?useUnicode=true&characterEncoding=UTF-8"
+				},
+				"sharedpool": "jdbc-acct"
+			},
+			"component_common": {
+				
+			},
+			"service_name": "otocloud-acct-rel",
+			"component_config": {
+			},
+			"api_register_server": {
+				"webserver_name": "121webserver-N01"
+			},
+			"component_deployment": []
+		}
+	},
+	"main": "otocloud.acct.rel.BizRelationService"
 }
