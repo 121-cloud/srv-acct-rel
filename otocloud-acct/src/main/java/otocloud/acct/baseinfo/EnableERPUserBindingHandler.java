@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015 121Cloud Project Group  All rights reserved.
- */
+ 
 package otocloud.acct.baseinfo;
 
 import otocloud.acct.dao.AccountDAO;
@@ -18,21 +18,21 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.sql.UpdateResult;
 
-/**
+*//**
  * 
  * @author hugw
  *
- */
+ *//*
 public class EnableERPUserBindingHandler extends OtoCloudEventHandlerImpl<Command> {
 
 	public static final String BIND_ENABLE = "erp_user_binding.enable";
 	public static final String ERP_BIND_APPID = "otocloud-app-common-uid";
 	
-	/**
+	*//**
 	 * Constructor.
 	 *
 	 * @param componentImpl
-	 */
+	 *//*
 	public EnableERPUserBindingHandler(OtoCloudComponentImpl componentImpl) {
 		super(componentImpl);
 	}
@@ -181,9 +181,9 @@ public class EnableERPUserBindingHandler extends OtoCloudEventHandlerImpl<Comman
 	}
 	
 	
-	/**
+	*//**
 	 * {@inheritDoc}
-	 */
+	 *//*
 	@Override
 	public HandlerDescriptor getHanlderDesc() {		
 		
@@ -191,10 +191,10 @@ public class EnableERPUserBindingHandler extends OtoCloudEventHandlerImpl<Comman
 		handlerDescriptor.setMessageFormat("command");
 		
 		//参数
-/*		List<ApiParameterDescriptor> paramsDesc = new ArrayList<ApiParameterDescriptor>();
+		List<ApiParameterDescriptor> paramsDesc = new ArrayList<ApiParameterDescriptor>();
 		paramsDesc.add(new ApiParameterDescriptor("targetacc",""));		
 		paramsDesc.add(new ApiParameterDescriptor("soid",""));		
-		handlerDescriptor.setParamsDesc(paramsDesc);	*/
+		handlerDescriptor.setParamsDesc(paramsDesc);	
 		
 		ActionURI uri = new ActionURI("erp_user_binding", HttpMethod.PUT);
 		handlerDescriptor.setRestApiURI(uri);
@@ -203,12 +203,13 @@ public class EnableERPUserBindingHandler extends OtoCloudEventHandlerImpl<Comman
 
 	}
 
-	/**
+	*//**
 	 * {@inheritDoc}
-	 */
+	 *//*
 	@Override
 	public String getEventAddress() {
 		return BIND_ENABLE;
 	}
 
 }
+*/

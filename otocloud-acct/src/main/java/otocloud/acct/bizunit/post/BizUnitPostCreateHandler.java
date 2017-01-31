@@ -1,21 +1,21 @@
 /*
  * Copyright (C) 2015 121Cloud Project Group  All rights reserved.
  */
-package otocloud.acct.org;
+package otocloud.acct.bizunit.post;
 
 import otocloud.common.ActionURI;
 import otocloud.framework.core.HandlerDescriptor;
 import otocloud.framework.core.OtoCloudBusMessage;
 import otocloud.framework.core.OtoCloudComponentImpl;
 import otocloud.framework.core.OtoCloudEventHandlerImpl;
-import otocloud.acct.dao.DepartmentDAO;
+import otocloud.acct.dao.BizUnitPostDAO;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.sql.UpdateResult;
 
 
-public class DepartmentCreateHandler extends OtoCloudEventHandlerImpl<JsonObject> {
+public class BizUnitPostCreateHandler extends OtoCloudEventHandlerImpl<JsonObject> {
 
 	public static final String DEP_CREATE = "create";
 
@@ -24,30 +24,34 @@ public class DepartmentCreateHandler extends OtoCloudEventHandlerImpl<JsonObject
 	 *
 	 * @param componentImpl
 	 */
-	public DepartmentCreateHandler(OtoCloudComponentImpl componentImpl) {
+	public BizUnitPostCreateHandler(OtoCloudComponentImpl componentImpl) {
 		super(componentImpl);
 	}
 
 	/**
-		{
-		"dept_name":"lenovo",
-		"dept_manager":"3911",
-		"org_acct_id":100
-		}
-	 */
+	{
+		post_code
+		post_name
+		d_org_role_id
+		acct_biz_unit_id
+		auth_role_id
+		is_manager
+		acct_id
+	}
+	*/
 	@Override
 	public void handle(OtoCloudBusMessage<JsonObject> msg) {
 		JsonObject body = msg.body();
 		
 		componentImpl.getLogger().info(body.toString());
 		
-		JsonObject department = body.getJsonObject("content");
+		JsonObject post = body.getJsonObject("content");
 		JsonObject sessionInfo = body.getJsonObject("session",null);		
 			
-		DepartmentDAO departmentDAO = new DepartmentDAO();
-		departmentDAO.setDataSource(componentImpl.getSysDatasource());		
+		BizUnitPostDAO bizUnitPostDAO = new BizUnitPostDAO(componentImpl.getSysDatasource());
+		//departmentDAO.setDataSource(componentImpl.getSysDatasource());		
 		
-		departmentDAO.createDepartment(department, sessionInfo, 
+		bizUnitPostDAO.create(post, sessionInfo, 
 		daoRet -> {
 
 			if (daoRet.failed()) {
@@ -65,9 +69,9 @@ public class DepartmentCreateHandler extends OtoCloudEventHandlerImpl<JsonObject
 				} else {
 					JsonArray ret = result.getKeys();
 					Integer id = ret.getInteger(0);
-					department.put("id", id);
+					post.put("id", id);
 
-					msg.reply(department);
+					msg.reply(post);
 
 				}
 			}

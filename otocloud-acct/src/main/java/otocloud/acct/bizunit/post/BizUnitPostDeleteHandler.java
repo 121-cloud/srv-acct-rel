@@ -1,9 +1,9 @@
 /*
  * Copyright (C) 2015 121Cloud Project Group  All rights reserved.
  */
-package otocloud.acct.baseinfo;
+package otocloud.acct.bizunit.post;
 
-import otocloud.acct.dao.AccountDAO;
+import otocloud.acct.dao.BizUnitPostDAO;
 import otocloud.common.ActionURI;
 import otocloud.framework.core.HandlerDescriptor;
 import otocloud.framework.core.OtoCloudBusMessage;
@@ -13,40 +13,39 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.sql.UpdateResult;
 
-/**
- * 
- * @author hugw
- *
- */
-public class AccountUnregisterHandler extends OtoCloudEventHandlerImpl<JsonObject> {
 
-	public static final String ACCOUNT_DELETE = "unregister";
-	
+public class BizUnitPostDeleteHandler extends OtoCloudEventHandlerImpl<JsonObject> {
+
+	public static final String DEP_DELETE = "delete";
+
 	/**
 	 * Constructor.
 	 *
 	 * @param componentImpl
 	 */
-	public AccountUnregisterHandler(OtoCloudComponentImpl componentImpl) {
+	public BizUnitPostDeleteHandler(OtoCloudComponentImpl componentImpl) {
 		super(componentImpl);
 	}
 
-
+	/**
+	{
+		"id":
+	}
+	 */
 	@Override
 	public void handle(OtoCloudBusMessage<JsonObject> msg) {
 		JsonObject body = msg.body();
 		
 		componentImpl.getLogger().info(body.toString());
 		
-		//JsonObject params = body.getJsonObject("queryParams");		
+		JsonObject params = body.getJsonObject("queryParams");
 		JsonObject sessionInfo = body.getJsonObject("session",null);		
 		
-		Long accId = sessionInfo.getLong("acct_id");
+		Long id = Long.parseLong(params.getString("id"));
 			
-		AccountDAO accountManagementDAO = new AccountDAO();
-		accountManagementDAO.setDataSource(componentImpl.getSysDatasource());
+		BizUnitPostDAO bizUnitPostDAO = new BizUnitPostDAO(componentImpl.getSysDatasource());		
 		
-		accountManagementDAO.unregisterAccount(accId, sessionInfo, daoRet -> {
+		bizUnitPostDAO.delete(id, sessionInfo, daoRet -> {
 
 			if (daoRet.failed()) {
 				Throwable err = daoRet.cause();
@@ -82,7 +81,7 @@ public class AccountUnregisterHandler extends OtoCloudEventHandlerImpl<JsonObjec
 		paramsDesc.add(new ApiParameterDescriptor("soid",""));		
 		handlerDescriptor.setParamsDesc(paramsDesc);	*/
 		
-		ActionURI uri = new ActionURI("", HttpMethod.DELETE);
+		ActionURI uri = new ActionURI(":id", HttpMethod.DELETE);
 		handlerDescriptor.setRestApiURI(uri);
 		
 		return handlerDescriptor;		
@@ -94,7 +93,7 @@ public class AccountUnregisterHandler extends OtoCloudEventHandlerImpl<JsonObjec
 	 */
 	@Override
 	public String getEventAddress() {
-		return ACCOUNT_DELETE;
+		return DEP_DELETE;
 	}
 
 }

@@ -1,55 +1,54 @@
 /*
  * Copyright (C) 2015 121Cloud Project Group  All rights reserved.
  */
-package otocloud.acct.org;
-
-import java.util.List;
+package otocloud.acct.bizunit;
 
 import otocloud.common.ActionURI;
 import otocloud.framework.core.HandlerDescriptor;
 import otocloud.framework.core.OtoCloudBusMessage;
 import otocloud.framework.core.OtoCloudComponentImpl;
 import otocloud.framework.core.OtoCloudEventHandlerImpl;
-import otocloud.acct.dao.DepartmentDAO;
+import otocloud.acct.dao.BizUnitDAO;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.sql.UpdateResult;
 
 
-public class DepartmentQueryHandler extends OtoCloudEventHandlerImpl<JsonObject> {
+public class BizUnitCreateHandler extends OtoCloudEventHandlerImpl<JsonObject> {
 
-	public static final String DEP_QUERY = "getAll";
+	public static final String DEP_CREATE = "create";
 
 	/**
 	 * Constructor.
 	 *
 	 * @param componentImpl
 	 */
-	public DepartmentQueryHandler(OtoCloudComponentImpl componentImpl) {
+	public BizUnitCreateHandler(OtoCloudComponentImpl componentImpl) {
 		super(componentImpl);
 	}
 
 	/**
-		{
-		"dept_name":"lenovo",
-		"dept_manager":"3911",
-		"org_acct_id":"100"
-		}
-	 */
+	{
+		"unit_code":
+		"unit_name":
+		"unit_manager":
+		"org_role_id":
+	}
+	*/
 	@Override
 	public void handle(OtoCloudBusMessage<JsonObject> msg) {
 		JsonObject body = msg.body();
 		
 		componentImpl.getLogger().info(body.toString());
 		
+		JsonObject department = body.getJsonObject("content");
 		JsonObject sessionInfo = body.getJsonObject("session",null);		
-		
-		Integer accId = sessionInfo.getInteger("acctId");
 			
-		DepartmentDAO departmentDAO = new DepartmentDAO();
-		departmentDAO.setDataSource(componentImpl.getSysDatasource());		
+		BizUnitDAO departmentDAO = new BizUnitDAO(componentImpl.getSysDatasource());
+		//departmentDAO.setDataSource(componentImpl.getSysDatasource());		
 		
-		departmentDAO.queryDepartments(accId, 
+		departmentDAO.create(department, sessionInfo, 
 		daoRet -> {
 
 			if (daoRet.failed()) {
@@ -58,10 +57,20 @@ public class DepartmentQueryHandler extends OtoCloudEventHandlerImpl<JsonObject>
 				componentImpl.getLogger().error(errMsg, err);	
 				msg.fail(400, errMsg);
 			} else {
-				List<JsonObject> ret = daoRet.result().getRows();
-				JsonArray retMsg = new JsonArray(ret);
+				UpdateResult result = daoRet.result();
+				if (result.getUpdated() <= 0) {						
+					String errMsg = "更新影响行数为0";
+					componentImpl.getLogger().error(errMsg);									
+					msg.fail(400, errMsg);
+						
+				} else {
+					JsonArray ret = result.getKeys();
+					Integer id = ret.getInteger(0);
+					department.put("id", id);
 
-				msg.reply(retMsg);
+					msg.reply(department);
+
+				}
 			}
 
 		});
@@ -83,7 +92,7 @@ public class DepartmentQueryHandler extends OtoCloudEventHandlerImpl<JsonObject>
 		paramsDesc.add(new ApiParameterDescriptor("soid",""));		
 		handlerDescriptor.setParamsDesc(paramsDesc);	*/
 		
-		ActionURI uri = new ActionURI("", HttpMethod.GET);
+		ActionURI uri = new ActionURI("", HttpMethod.POST);
 		handlerDescriptor.setRestApiURI(uri);
 		
 		return handlerDescriptor;		
@@ -95,7 +104,7 @@ public class DepartmentQueryHandler extends OtoCloudEventHandlerImpl<JsonObject>
 	 */
 	@Override
 	public String getEventAddress() {
-		return DEP_QUERY;
+		return DEP_CREATE;
 	}
 
 }

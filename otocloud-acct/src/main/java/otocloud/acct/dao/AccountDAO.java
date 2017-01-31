@@ -10,7 +10,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.sql.UpdateResult;
 
@@ -110,29 +109,29 @@ public class AccountDAO extends OperatorDAO {
 	}
 
 	
-	public void modifyAccountInfo(Integer acctId, JsonObject acctInfo, JsonObject sessionInfo, Handler<AsyncResult<UpdateResult>> done) {
+	public void modifyAccountInfo(Long acctId, JsonObject acctInfo, JsonObject sessionInfo, Handler<AsyncResult<UpdateResult>> done) {
 		
 		  Future<UpdateResult> retFuture = Future.future();
 		  retFuture.setHandler(done);
 		  
 		  JsonObject whereObj = new JsonObject().put("id", acctId);
 		  
-		  this.updateBy("org_partner", acctInfo, whereObj, sessionInfo.getInteger("userId", 0), retFuture);
+		  this.updateBy("acct_org_info", acctInfo, whereObj, sessionInfo.getLong("user_id", 0L), retFuture);
 	  
 	}
 	
-	public void EnableERPUserBindingHandler(Integer acctId, Boolean isEnabled, JsonObject sessionInfo, Handler<AsyncResult<UpdateResult>> done) {
+/*	public void EnableERPUserBindingHandler(Integer acctId, Boolean isEnabled, JsonObject sessionInfo, Handler<AsyncResult<UpdateResult>> done) {
 		
 		  Future<UpdateResult> retFuture = Future.future();
 		  retFuture.setHandler(done);
 		  
 		  JsonObject whereObj = new JsonObject().put("id", acctId);
 		  
-		  this.updateBy("org_acct", new JsonObject().put("enable_erp_user", isEnabled ? 1 : 0), whereObj, sessionInfo.getInteger("userId", 0), retFuture);
+		  this.updateBy("acct", new JsonObject().put("enable_erp_user", isEnabled ? 1 : 0), whereObj, sessionInfo.getLong("user_id", 0L), retFuture);
 		  
-	}
+	}*/
 	
-	public void GetERPUserBindSettingHandler(Integer acctId, JsonObject sessionInfo, Handler<AsyncResult<ResultSet>> done) {
+/*	public void GetERPUserBindSettingHandler(Integer acctId, JsonObject sessionInfo, Handler<AsyncResult<ResultSet>> done) {
 		
 		  Future<ResultSet> retFuture = Future.future();
 		  retFuture.setHandler(done);
@@ -141,20 +140,20 @@ public class AccountDAO extends OperatorDAO {
 		  
 		  String[] columns = new String[]{"enable_erp_user"};
 		  
-		  this.queryBy("org_acct", columns, whereObj, retFuture);
+		  this.queryBy("acct", columns, whereObj, retFuture);
 		  
-	}
+	}*/
 
-	public void unregisterAccount(Integer accId, JsonObject sessionInfo, Handler<AsyncResult<UpdateResult>> done) {
+	public void unregisterAccount(Long accId, JsonObject sessionInfo, Handler<AsyncResult<UpdateResult>> done) {
 		
 		  Future<UpdateResult> retFuture = Future.future();
 		  retFuture.setHandler(done);
 		  
-		  String sql = "UPDATE org_acct SET status='D',update_id=?,update_datetime=now() WHERE id=?";
+		  String sql = "UPDATE acct SET status='D',update_id=?,update_datetime=now() WHERE id=?";
 
 		  this.updateWithParams(sql, 
 				  	new JsonArray()
-						  .add(sessionInfo.getInteger("userId"))
+						  .add(sessionInfo.getLong("user_id"))
 						  .add(accId),  
 						  retFuture);	  
 	}

@@ -7,9 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import otocloud.acct.baseinfo.AccountManagerComponent;
-import otocloud.acct.gateway.GatewayManagerComponent;
-import otocloud.acct.operator.OperatorManagerComponent;
-import otocloud.acct.org.DepartmentManagerComponent;
+import otocloud.acct.bizunit.BizUnitComponent;
+import otocloud.acct.bizunit.post.BizUnitPostComponent;
 import otocloud.framework.core.OtoCloudComponent;
 import otocloud.framework.core.OtoCloudServiceForVerticleImpl;
 
@@ -33,14 +32,17 @@ public class AccountService extends OtoCloudServiceForVerticleImpl {
 		AccountManagerComponent component = new AccountManagerComponent();
 		components.add(component);
 		
-		GatewayManagerComponent gwManagerComponent = new GatewayManagerComponent();
-		components.add(gwManagerComponent);
+/*		GatewayManagerComponent gwManagerComponent = new GatewayManagerComponent();
+		components.add(gwManagerComponent);*/
 		
-		DepartmentManagerComponent depManagerComponent = new DepartmentManagerComponent();
-		components.add(depManagerComponent);
+		BizUnitComponent bizUnitComponent = new BizUnitComponent();
+		components.add(bizUnitComponent);
 		
-		OperatorManagerComponent operatorManagerComponent = new OperatorManagerComponent();
-		components.add(operatorManagerComponent);
+		BizUnitPostComponent bizUnitPostComponent = new BizUnitPostComponent();
+		components.add(bizUnitPostComponent);
+		
+/*		OperatorManagerComponent operatorManagerComponent = new OperatorManagerComponent();
+		components.add(operatorManagerComponent);*/
 				
 		return components;
 	}  
