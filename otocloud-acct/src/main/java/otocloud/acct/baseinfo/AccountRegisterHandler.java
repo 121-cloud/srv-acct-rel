@@ -3,9 +3,7 @@
  */
 package otocloud.acct.baseinfo;
 
-import otocloud.acct.dao.AccountBizRoleDAO;
 import otocloud.acct.dao.AccountDAO;
-import otocloud.acct.dao.AppSubscriptionDAO;
 import otocloud.common.ActionURI;
 import otocloud.framework.core.HandlerDescriptor;
 import otocloud.framework.core.OtoCloudBusMessage;
@@ -16,11 +14,9 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.sql.SQLConnection;
-import io.vertx.ext.sql.UpdateResult;
 
 
 public class AccountRegisterHandler extends OtoCloudEventHandlerImpl<JsonObject> {
@@ -29,7 +25,7 @@ public class AccountRegisterHandler extends OtoCloudEventHandlerImpl<JsonObject>
 	
 	public static final String USER_REGISTER = "user-management.users.post";	
 	
-	public static final int RFB_BIZROLE_REL_ID = 1; //保理商业角色关系
+/*	public static final int RFB_BIZROLE_REL_ID = 1; //保理商业角色关系
 	public static final boolean RFB_FROM_BIZROLE_REL_IsReverse = true; //在核心企业看是否反向关系
 	public static final int RFB_APP_ID = 2; //保理应用ID
 	public static final int RFB_APP_VER_ID = 2; //保理应用版本	
@@ -37,6 +33,7 @@ public class AccountRegisterHandler extends OtoCloudEventHandlerImpl<JsonObject>
 	
 	public static final int RFB_CANA_ID = 1; //凯拿账户号
 	public static final int RFB_CANA_APP_ID = 3; //凯拿应用ID
+*/	
 	
 	/**
 	 * Constructor.
@@ -49,15 +46,15 @@ public class AccountRegisterHandler extends OtoCloudEventHandlerImpl<JsonObject>
 
 	/**
 		{
-		"acct_name":"lenovo",
-		"industry_code":"3911",
-		"ownership_code":"100",
-		"area_code":"110108",
-		"address":"上地7街38号",
-		"tel":"010-6956789",
-		"email":"admin@lenovo.com",
-		"website_url":"www.lenovo.com",
-		"description":"世界五百强，PC业老大。",
+			"acct_name":"lenovo",
+			"industry_code":"3911",
+			"ownership_code":"100",
+			"area_code":"110108",
+			"address":"上地7街38号",
+			"tel":"010-6956789",
+			"email":"admin@lenovo.com",
+			"website_url":"www.lenovo.com",
+			"description":"世界五百强，PC业老大。",
 			"manager": {
 			   "name": "lj",
 			   "password":"www",
@@ -103,47 +100,40 @@ public class AccountRegisterHandler extends OtoCloudEventHandlerImpl<JsonObject>
 									msg.fail(400, errMsg);
 								});														
 							} else {
-								UpdateResult result = daoRet.result();
-								if (result.getUpdated() <= 0) {						
-									String errMsg = "更新影响行数为0";
-									componentImpl.getLogger().error(errMsg);									
-									transConn.rollbackAndClose(closedRet->{
-										msg.fail(400, errMsg);
-									});			
-								} else {
-									JsonArray ret = result.getKeys();
-									Integer accId = ret.getInteger(0);
-									acctRegInfo.put("id", accId);
-									
-									JsonObject managerInfo = acctRegInfo.getJsonObject("manager");
-									managerInfo.put("org_acct_id", accId);
-									
-									registerUser(managerInfo, regUser->{
-										if(regUser.succeeded()){
+								JsonObject result = daoRet.result();
+								result.put("user", acctRegInfo.getJsonObject("manager"));
+/*								Long accId = result.getLong("acct_id");
+								acctRegInfo.put("id", accId);
+								
+								JsonObject managerInfo = acctRegInfo.getJsonObject("manager");
+								managerInfo.put("org_acct_id", accId);*/
+								
+								registerUser(result, regUser->{
+									if(regUser.succeeded()){
+										
+										//sessionInfo.put("user_id", regUser.result());
+										
+										transConn.commitAndClose(closedRet->{
+											msg.reply(acctRegInfo);												
 											
-											sessionInfo.put("userId", regUser.result());
-											
-											transConn.commitAndClose(closedRet->{
-												msg.reply(acctRegInfo);												
+											//创建凯拿应付保理应用实例,构建账户关系
+/*											sessionInfo.put("acct_id", accId);					
+											createCanaBizRelationForAcc(accId, sessionInfo, createInstRet->{
 												
-												//创建凯拿应付保理应用实例,构建账户关系
-												sessionInfo.put("acctId", accId);					
-												createCanaBizRelationForAcc(accId, sessionInfo, createInstRet->{
-													
-												});												
+											});		*/										
 
-											});												
-										}else{
-											componentImpl.getLogger().info("注册用户失败，账户注册回滚!");
-											Throwable err = regUser.cause();
-											String errMsg = err.getMessage();
-											componentImpl.getLogger().error(errMsg, err);	
-											transConn.rollbackAndClose(closedRet->{												
-												msg.fail(400, errMsg);
-											});			
-										}
-									});
-								}
+										});												
+									}else{
+										componentImpl.getLogger().info("注册用户失败，账户注册回滚!");
+										Throwable err = regUser.cause();
+										String errMsg = err.getMessage();
+										componentImpl.getLogger().error(errMsg, err);	
+										transConn.rollbackAndClose(closedRet->{												
+											msg.fail(400, errMsg);
+										});			
+									}
+								});
+								
 							}
 
 						});
@@ -168,14 +158,14 @@ public class AccountRegisterHandler extends OtoCloudEventHandlerImpl<JsonObject>
 
 	}
 	
-	private void registerUser(JsonObject userRegInfo, Handler<AsyncResult<Integer>> next){
+	private void registerUser(JsonObject userRegInfo, Handler<AsyncResult<Long>> next){
 		String authSrvName = componentImpl.getDependencies().getJsonObject("auth_service").getString("service_name","");
 		String address = authSrvName + "." + USER_REGISTER; 
 		
 		JsonObject msg = new JsonObject();
 		msg.put("content", userRegInfo);
 		
-		Future<Integer> ret = Future.future();
+		Future<Long> ret = Future.future();
 		ret.setHandler(next);		
 		
 		componentImpl.getEventBus().send(address,
@@ -183,7 +173,7 @@ public class AccountRegisterHandler extends OtoCloudEventHandlerImpl<JsonObject>
 					if(regUserRet.succeeded()){
 						JsonObject userInfo = (JsonObject)regUserRet.result().body(); 
 						//userRegInfo.put("id", userInfo.getJsonObject("data").getInteger("userId"));						
-						ret.complete(userInfo.getJsonObject("data").getInteger("userId", -1));											
+						ret.complete(userInfo.getLong("id", 0L));											
 					}else{		
 						Throwable err = regUserRet.cause();						
 						err.printStackTrace();		
@@ -195,7 +185,7 @@ public class AccountRegisterHandler extends OtoCloudEventHandlerImpl<JsonObject>
 	}
 	
 
-	private void createCanaBizRelationForAcc(Integer acctId, JsonObject sessionInfo, Handler<AsyncResult<Void>> next){
+/*	private void createCanaBizRelationForAcc(Integer acctId, JsonObject sessionInfo, Handler<AsyncResult<Void>> next){
 		
 		Future<Void> ret = Future.future();
 		ret.setHandler(next);
@@ -301,7 +291,7 @@ public class AccountRegisterHandler extends OtoCloudEventHandlerImpl<JsonObject>
 
 		});
 				
-	}
+	}*/
 	
 	
 	

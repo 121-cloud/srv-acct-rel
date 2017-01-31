@@ -17,25 +17,31 @@ import io.vertx.ext.sql.UpdateResult;
 
 public class AccountDAO extends OperatorDAO {
 
-	public void registerAccount(TransactionConnection conn, JsonObject acctRegInfo, JsonObject sessionInfo, Handler<AsyncResult<UpdateResult>> done) {
+	public void registerAccount(TransactionConnection conn, JsonObject acctRegInfo, JsonObject sessionInfo, Handler<AsyncResult<JsonObject>> done) {
 		SQLConnection realConn = conn.getConn();
 		
-	  Future<UpdateResult> retFuture = Future.future();
+		Long userId = sessionInfo.getLong("user_id", 0L);
+		
+	  Future<JsonObject> retFuture = Future.future();
 	  retFuture.setHandler(done);
 	  
-	  String sql1 = "INSERT INTO org_acct(acct_name,acct_type,status,entry_id,entry_datetime)VALUES(?,?,?,?,now())";
-	  String sql2 = "INSERT INTO org_partner(id,industry_code,ownership_code,area_code,address,invitation_code,tel,email,website_url,description,entry_id,entry_datetime)VALUES(?,?,?,?,?,?,?,?,?,?,?,now())";
+	  String sql1 = "INSERT INTO acct(acct_name,acct_type,status,entry_id,entry_datetime)VALUES(?,?,?,?,now())";
+	  String sql2 = "INSERT INTO acct_org_info(id,industry_code,ownership_code,area_code,address,invitation_code,tel,email,website_url,description,entry_id,entry_datetime)VALUES(?,?,?,?,?,?,?,?,?,?,?,now())";
+	  String sql3 = "INSERT INTO acct_biz_unit(unit_code,unit_name,acct_id,org_role_id,entry_id,entry_datetime)VALUES('IT','IT部门',?,1,?,now())";
+	  String sql4 = "INSERT INTO acct_biz_unit_post(post_code,post_name,d_org_role_id,acct_biz_unit_id,auth_role_id,is_manager,acct_id,entry_id,entry_datetime)VALUES('IT001','IT管理员',1,?,1,1,?,?,now())";
 
 	  realConn.updateWithParams(sql1, 
 		  	new JsonArray()
 				  .add(acctRegInfo.getString("acct_name"))
 				  .add("PARTNER")
 				  .add("A")
-				  .add(sessionInfo.getInteger("userId", 0)),  
+				  .add(userId),  
 	  ret -> {		
 		  if(ret.succeeded()){
 			  UpdateResult updateRet = ret.result();
-			  Integer accId = updateRet.getKeys().getInteger(0);	
+			  JsonObject acctResult = new JsonObject(); 
+			  Long accId = updateRet.getKeys().getLong(0);	
+			  acctResult.put("acct_id", accId);
 			  
 			  realConn.updateWithParams(sql2, 
 					  	new JsonArray()
@@ -49,12 +55,45 @@ public class AccountDAO extends OperatorDAO {
 			  				.add(acctRegInfo.getString("email",""))
 			  				.add(acctRegInfo.getString("website_url",""))
 			  				.add(acctRegInfo.getString("description",""))
-    				  				.add(1),
+    				  				.add(userId),
 
     		    		  ret2 -> {		
-    		    			  if(ret2.succeeded()){   		    				  
-  				  
-    		    				  retFuture.complete(updateRet);
+    		    			  if(ret2.succeeded()){    		    				  
+    		    				  realConn.updateWithParams(sql3, 
+    		    						  	new JsonArray()
+    		    						  		.add(accId)
+    		    						  		.add(userId),
+    		    	    		    		  ret3 -> {		
+    		    	    		    			  if(ret3.succeeded()){ 
+    		    	    		    				  UpdateResult bizUnitRet = ret3.result();    		    	    		    				  
+    		    	    		    				  Long bizUnitId = bizUnitRet.getKeys().getLong(0);
+    		    	    		    				  acctResult.put("biz_unit_id", bizUnitId);
+    		    	    		    				  
+    		    	    		    				  realConn.updateWithParams(sql4, 
+    		    	    		    						  	new JsonArray()
+    		    	    		    				  				.add(bizUnitId)
+    		    	    		    						  		.add(accId)
+    		    	    		    						  		.add(userId),
+    		    	    		    	    		    		  ret4 -> {		
+    		    	    		    	    		    			  if(ret4.succeeded()){ 
+    		    	    		    	    		    				  UpdateResult bizUnitPostRet = ret4.result();    		    	    		    				  
+    		    	    		    	    		    				  Long postRet = bizUnitPostRet.getKeys().getLong(0);
+    		    	    		    	    		    				  acctResult.put("mgr_post_id", postRet);
+    		    	    		    	    		    				  
+    		    						    		    				  retFuture.complete(acctResult);
+    		    	    		    	    		    			  }else{
+    		    	    		    	    		    				  Throwable err = ret4.cause();
+    		    	    		    	    		    				  err.printStackTrace();
+    		    	    		    	    		    				  retFuture.fail(err);
+    		    	    		    	    		    			  }
+    		    	    		    	    		    		  });
+					    		    				  
+    		    	    		    			  }else{
+    		    	    		    				  Throwable err = ret3.cause();
+    		    	    		    				  err.printStackTrace();
+    		    	    		    				  retFuture.fail(err);
+    		    	    		    			  }
+    		    	    		    		  });
 	    				  
 	    			  }else{
 	    				  Throwable err = ret2.cause();
