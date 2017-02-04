@@ -6,6 +6,7 @@ package otocloud.acct;
 import java.util.ArrayList;
 import java.util.List;
 
+import otocloud.acct.app.AcctAppComponent;
 import otocloud.acct.baseinfo.AccountManagerComponent;
 import otocloud.acct.bizunit.BizUnitComponent;
 import otocloud.acct.bizunit.post.BizUnitPostComponent;
@@ -32,8 +33,8 @@ public class AccountService extends OtoCloudServiceForVerticleImpl {
 		AccountManagerComponent component = new AccountManagerComponent();
 		components.add(component);
 		
-/*		GatewayManagerComponent gwManagerComponent = new GatewayManagerComponent();
-		components.add(gwManagerComponent);*/
+		AcctAppComponent acctAppComponent = new AcctAppComponent();
+		components.add(acctAppComponent);
 		
 		BizUnitComponent bizUnitComponent = new BizUnitComponent();
 		components.add(bizUnitComponent);

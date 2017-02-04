@@ -15,7 +15,7 @@ public class AccountManagerComponent extends OtoCloudComponentImpl {
 	
 	@Override
 	public String getName() {
-		return "account";
+		return "account-registry";
 	}
 
 	@Override

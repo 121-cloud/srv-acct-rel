@@ -53,9 +53,9 @@ public class AccountModifyHandler extends OtoCloudEventHandlerImpl<JsonObject> {
 		//JsonObject params = body.getJsonObject("queryParams");
 		
 		JsonObject acctRegInfo = body.getJsonObject("content");
-		JsonObject sessionInfo = body.getJsonObject("session",null);
+		JsonObject sessionInfo = msg.getSession();
 		
-		Long accId = sessionInfo.getLong("acct_id");
+		Long accId = Long.parseLong(sessionInfo.getString("acct_id"));
 		
 		AccountDAO accountManagementDAO = new AccountDAO();
 		accountManagementDAO.setDataSource(componentImpl.getSysDatasource());

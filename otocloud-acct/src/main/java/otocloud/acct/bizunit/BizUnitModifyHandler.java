@@ -44,7 +44,8 @@ public class BizUnitModifyHandler extends OtoCloudEventHandlerImpl<JsonObject> {
 		JsonObject params = body.getJsonObject("queryParams");
 		
 		JsonObject department = body.getJsonObject("content");
-		JsonObject sessionInfo = body.getJsonObject("session",null);		
+		JsonObject sessionInfo = msg.getSession();
+		
 			
 		BizUnitDAO departmentDAO = new BizUnitDAO(componentImpl.getSysDatasource());
 		//departmentDAO.setDataSource(componentImpl.getSysDatasource());		

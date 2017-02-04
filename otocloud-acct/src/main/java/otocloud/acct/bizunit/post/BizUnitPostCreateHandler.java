@@ -46,7 +46,7 @@ public class BizUnitPostCreateHandler extends OtoCloudEventHandlerImpl<JsonObjec
 		componentImpl.getLogger().info(body.toString());
 		
 		JsonObject post = body.getJsonObject("content");
-		JsonObject sessionInfo = body.getJsonObject("session",null);		
+		JsonObject sessionInfo = msg.getSession();
 			
 		BizUnitPostDAO bizUnitPostDAO = new BizUnitPostDAO(componentImpl.getSysDatasource());
 		//departmentDAO.setDataSource(componentImpl.getSysDatasource());		

@@ -39,7 +39,7 @@ public class BizUnitPostDeleteHandler extends OtoCloudEventHandlerImpl<JsonObjec
 		componentImpl.getLogger().info(body.toString());
 		
 		JsonObject params = body.getJsonObject("queryParams");
-		JsonObject sessionInfo = body.getJsonObject("session",null);		
+		JsonObject sessionInfo = msg.getSession();
 		
 		Long id = Long.parseLong(params.getString("id"));
 			

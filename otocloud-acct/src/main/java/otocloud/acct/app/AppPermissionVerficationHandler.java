@@ -1,55 +1,70 @@
 /*
  * Copyright (C) 2015 121Cloud Project Group  All rights reserved.
  */
-package otocloud.acct.gateway;
+package otocloud.acct.app;
 
 import otocloud.common.ActionURI;
 import otocloud.framework.core.HandlerDescriptor;
 import otocloud.framework.core.OtoCloudBusMessage;
 import otocloud.framework.core.OtoCloudComponentImpl;
 import otocloud.framework.core.OtoCloudEventHandlerImpl;
-import otocloud.gw.common.GatewayAgent;
+import otocloud.acct.dao.AppSubscribeDAO;
+import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 
 
-public class GatewayStatusHandler extends OtoCloudEventHandlerImpl<JsonObject> {
+public class AppPermissionVerficationHandler extends OtoCloudEventHandlerImpl<JsonObject> {
 
-	public static final String GATEWAY_STATUS_GET = "state.query";
-	
+	public static final String ADDRESS = "app-permission-verfication";
+
 	/**
 	 * Constructor.
 	 *
 	 * @param componentImpl
 	 */
-	public GatewayStatusHandler(OtoCloudComponentImpl componentImpl) {
+	public AppPermissionVerficationHandler(OtoCloudComponentImpl componentImpl) {
 		super(componentImpl);
 	}
 
-
+	/**
+	{
+		"acct_id":
+		"app_id":
+	}
+	*/
 	@Override
 	public void handle(OtoCloudBusMessage<JsonObject> msg) {
 		JsonObject body = msg.body();
-		JsonObject sessionInfo = body.getJsonObject("session",null);	
 		
-		//JsonObject sessionInfo = body.getJsonObject("queryParams");
-
-		Integer accId = sessionInfo.getInteger("acctId");
+		componentImpl.getLogger().info(body.toString());
 		
-		GatewayAgent gwAgent = new GatewayAgent(componentImpl.getVertx(), accId);
-		gwAgent.queryState(gwStateRet->{													
-			if(gwStateRet.failed()){
-				String errString = gwStateRet.getStatusMessage();
-				componentImpl.getLogger().error(errString);	
-				msg.fail(400, errString);
-			}else{
-				msg.reply(gwStateRet.getData());
+		JsonObject subscribeInfo = body.getJsonObject("content");
+		
+		Long acctId = subscribeInfo.getLong("acct_id");
+		Long appId = subscribeInfo.getLong("app_id");
+		
+		Future<Boolean> getFuture = Future.future();
+		
+		AppSubscribeDAO appSubscribeDAO = new AppSubscribeDAO(componentImpl.getSysDatasource());	
+		
+		appSubscribeDAO.permissionVerify(acctId, appId, getFuture);
+		
+		getFuture.setHandler(ret-> {
+			if (ret.failed()) {
+				Throwable err = ret.cause();
+				String errMsg = err.getMessage();
+				componentImpl.getLogger().error(errMsg, err);	
+				msg.fail(400, errMsg);
+			} else {
+				Boolean isOk = ret.result();	
+				msg.reply(new JsonObject().put("result", isOk));
 			}
-		});	
+		});
+
 
 	}
 	
-
 	
 	/**
 	 * {@inheritDoc}
@@ -65,7 +80,7 @@ public class GatewayStatusHandler extends OtoCloudEventHandlerImpl<JsonObject> {
 		paramsDesc.add(new ApiParameterDescriptor("soid",""));		
 		handlerDescriptor.setParamsDesc(paramsDesc);	*/
 		
-		ActionURI uri = new ActionURI("state", HttpMethod.GET);
+		ActionURI uri = new ActionURI(ADDRESS, HttpMethod.POST);
 		handlerDescriptor.setRestApiURI(uri);
 		
 		return handlerDescriptor;		
@@ -77,7 +92,7 @@ public class GatewayStatusHandler extends OtoCloudEventHandlerImpl<JsonObject> {
 	 */
 	@Override
 	public String getEventAddress() {
-		return GATEWAY_STATUS_GET;
+		return ADDRESS;
 	}
 
 }

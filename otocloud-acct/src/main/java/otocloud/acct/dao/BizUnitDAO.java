@@ -45,7 +45,9 @@ public class BizUnitDAO extends OperatorDAO{
 	public void create(JsonObject department, JsonObject sessionInfo, Handler<AsyncResult<UpdateResult>> done) {
 		  
 	  Future<UpdateResult> retFuture = Future.future();
-	  retFuture.setHandler(done);	  
+	  retFuture.setHandler(done);	 
+	  
+	  Long userId = Long.parseLong(sessionInfo.getString("user_id"));
 		  
 	  String sql = "INSERT INTO acct_biz_unit(unit_code,unit_name,unit_manager,org_role_id,acct_id,entry_id,entry_datetime)VALUES(?,?,?,?,?,?,now())"; 
 	  
@@ -56,7 +58,7 @@ public class BizUnitDAO extends OperatorDAO{
 				  .add(department.getLong("unit_manager"))
 				  .add(department.getLong("org_role_id"))
 				  .add(department.getLong("acct_id"))
-				  .add(sessionInfo.getLong("user_id")),  
+				  .add(userId),  
 				  retFuture);	  
 
 	}
@@ -70,7 +72,9 @@ public class BizUnitDAO extends OperatorDAO{
 	  JsonObject whereObj = new JsonObject()
 	  		.put("id", depId);
 	  
-	  this.updateBy("acct_biz_unit", department, whereObj, sessionInfo.getLong("user_id", 0L), retFuture);
+	  Long userId = Long.parseLong(sessionInfo.getString("user_id"));
+	  
+	  this.updateBy("acct_biz_unit", department, whereObj, userId, retFuture);
 	}
 
 	public void delete(Long depId, JsonObject sessionInfo, Handler<AsyncResult<UpdateResult>> done) {
@@ -84,11 +88,13 @@ public class BizUnitDAO extends OperatorDAO{
 				  	new JsonArray()
 						  .add(depId), retFuture);	  */
 		  
+		  Long userId = Long.parseLong(sessionInfo.getString("user_id"));
+		  
 		  String sql = "UPDATE acct_biz_unit SET delete_id=?,delete_datetime=now() WHERE id=?";
 
 		  this.updateWithParams(sql, 
 				  	new JsonArray()
-						  .add(sessionInfo.getLong("user_id"))
+						  .add(userId)
 						  .add(depId),  
 						  retFuture);	  
 	}

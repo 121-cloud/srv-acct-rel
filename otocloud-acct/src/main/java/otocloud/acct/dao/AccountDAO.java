@@ -19,7 +19,7 @@ public class AccountDAO extends OperatorDAO {
 	public void registerAccount(TransactionConnection conn, JsonObject acctRegInfo, JsonObject sessionInfo, Handler<AsyncResult<JsonObject>> done) {
 		SQLConnection realConn = conn.getConn();
 		
-		Long userId = sessionInfo.getLong("user_id", 0L);
+		Long userId = Long.parseLong(sessionInfo.getString("user_id"));
 		
 	  Future<JsonObject> retFuture = Future.future();
 	  retFuture.setHandler(done);
@@ -116,7 +116,9 @@ public class AccountDAO extends OperatorDAO {
 		  
 		  JsonObject whereObj = new JsonObject().put("id", acctId);
 		  
-		  this.updateBy("acct_org_info", acctInfo, whereObj, sessionInfo.getLong("user_id", 0L), retFuture);
+		  Long userId = Long.parseLong(sessionInfo.getString("user_id"));
+		  
+		  this.updateBy("acct_org_info", acctInfo, whereObj, userId, retFuture);
 	  
 	}
 	
@@ -149,11 +151,13 @@ public class AccountDAO extends OperatorDAO {
 		  Future<UpdateResult> retFuture = Future.future();
 		  retFuture.setHandler(done);
 		  
+		  Long userId = Long.parseLong(sessionInfo.getString("user_id"));
+		  
 		  String sql = "UPDATE acct SET status='D',update_id=?,update_datetime=now() WHERE id=?";
 
 		  this.updateWithParams(sql, 
 				  	new JsonArray()
-						  .add(sessionInfo.getLong("user_id"))
+						  .add(userId)
 						  .add(accId),  
 						  retFuture);	  
 	}

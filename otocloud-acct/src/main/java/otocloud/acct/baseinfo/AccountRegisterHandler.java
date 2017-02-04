@@ -21,9 +21,8 @@ import io.vertx.ext.sql.SQLConnection;
 
 public class AccountRegisterHandler extends OtoCloudEventHandlerImpl<JsonObject> {
 
-	public static final String ACCOUNT_REGISTER = "register";//响应用户注册
+	public static final String ACCOUNT_REGISTER = "register";//响应用户注册	
 	
-	public static final String USER_REGISTER = "user-management.users.post";	
 	
 /*	public static final int RFB_BIZROLE_REL_ID = 1; //保理商业角色关系
 	public static final boolean RFB_FROM_BIZROLE_REL_IsReverse = true; //在核心企业看是否反向关系
@@ -67,7 +66,9 @@ public class AccountRegisterHandler extends OtoCloudEventHandlerImpl<JsonObject>
 	public void handle(OtoCloudBusMessage<JsonObject> msg) {
 		JsonObject body = msg.body();
 		JsonObject acctRegInfo = body.getJsonObject("content");
-		JsonObject sessionInfo = body.getJsonObject("session",null);
+		JsonObject sessionInfo = msg.getSession();
+		
+		//Long accId = Long.parseLong(sessionInfo.getString("acct_id"));
 		
 /*		String accname = acctRegInfo.getString("acct_name");
 		String industry = acctRegInfo.getString("industry_code","");
@@ -95,10 +96,13 @@ public class AccountRegisterHandler extends OtoCloudEventHandlerImpl<JsonObject>
 							if (daoRet.failed()) {
 								Throwable err = daoRet.cause();
 								String errMsg = err.getMessage();
-								componentImpl.getLogger().error(errMsg, err);	
-								transConn.close(closedRet->{
+								componentImpl.getLogger().error(errMsg, err);									
+								transConn.rollbackAndClose(closedRet->{												
 									msg.fail(400, errMsg);
-								});														
+								});									
+/*								transConn.close(closedRet->{
+									msg.fail(400, errMsg);
+								});	*/													
 							} else {
 								JsonObject result = daoRet.result();
 								result.put("user", acctRegInfo.getJsonObject("manager"));
@@ -160,7 +164,7 @@ public class AccountRegisterHandler extends OtoCloudEventHandlerImpl<JsonObject>
 	
 	private void registerUser(JsonObject userRegInfo, Handler<AsyncResult<Long>> next){
 		String authSrvName = componentImpl.getDependencies().getJsonObject("auth_service").getString("service_name","");
-		String address = authSrvName + "." + USER_REGISTER; 
+		String address = authSrvName + ".user-management.register";
 		
 		JsonObject msg = new JsonObject();
 		msg.put("content", userRegInfo);
