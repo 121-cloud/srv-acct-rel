@@ -32,6 +32,9 @@ public class AccountManagerComponent extends OtoCloudComponentImpl {
 		AccountModifyHandler accountModifyHandler = new AccountModifyHandler(this);
 		ret.add(accountModifyHandler);		
 		
+		AccountQueryHandler accountQueryHandler = new AccountQueryHandler(this);
+		ret.add(accountQueryHandler);		
+		
 /*		EnableERPUserBindingHandler enableERPUserBindingHandler = new EnableERPUserBindingHandler(this);
 		ret.add(enableERPUserBindingHandler);
 		

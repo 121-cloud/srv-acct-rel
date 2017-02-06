@@ -197,7 +197,7 @@ public class AppSubscribeDAO extends OperatorDAO {
 		Long org_role_id = bizUnitInfo.getLong("org_role_id");
 
 	  String sql3 = "INSERT INTO acct_biz_unit(unit_code,unit_name,acct_id,org_role_id,entry_id,entry_datetime)VALUES(?,?,?,?,?,now())";
-	  String sql4 = "INSERT INTO acct_biz_unit_post(post_code,post_name,d_org_role_id,acct_biz_unit_id,auth_role_id,is_manager,acct_id,entry_id,entry_datetime)VALUES(?,?,?,?,?,0,?,?,now())";
+	  String sql4 = "INSERT INTO acct_biz_unit_post(post_code,post_name,d_org_role_id,acct_biz_unit_id,auth_role_id,acct_id,entry_id,entry_datetime)VALUES(?,?,?,?,?,?,?,now())";
 	  String sql5 = "INSERT INTO acct_biz_unit_post_activity(acct_biz_unit_post_id,acct_app_activity_id,d_app_id,d_app_activity_id,d_app_activity_code,acct_id,entry_id,entry_datetime)VALUES(?,?,?,?,?,?,?,now())";
 
         conn.updateWithParams(sql3, 

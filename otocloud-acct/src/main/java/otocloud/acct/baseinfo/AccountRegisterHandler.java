@@ -45,11 +45,13 @@ public class AccountRegisterHandler extends OtoCloudEventHandlerImpl<JsonObject>
 
 	/**
 		{
-			"acct_name":"lenovo",
+			"acct_code": "lenovo"
+			"acct_name":"联想",
 			"industry_code":"3911",
 			"ownership_code":"100",
 			"area_code":"110108",
 			"address":"上地7街38号",
+			"contacts":联系人,
 			"tel":"010-6956789",
 			"email":"admin@lenovo.com",
 			"website_url":"www.lenovo.com",
@@ -103,13 +105,13 @@ public class AccountRegisterHandler extends OtoCloudEventHandlerImpl<JsonObject>
 /*								transConn.close(closedRet->{
 									msg.fail(400, errMsg);
 								});	*/													
-							} else {
+							} else {								
 								JsonObject result = daoRet.result();
 								result.put("user", acctRegInfo.getJsonObject("manager"));
-/*								Long accId = result.getLong("acct_id");
+								Long accId = result.getLong("acct_id");
 								acctRegInfo.put("id", accId);
 								
-								JsonObject managerInfo = acctRegInfo.getJsonObject("manager");
+								/*JsonObject managerInfo = acctRegInfo.getJsonObject("manager");
 								managerInfo.put("org_acct_id", accId);*/
 								
 								registerUser(result, regUser->{
@@ -313,7 +315,7 @@ public class AccountRegisterHandler extends OtoCloudEventHandlerImpl<JsonObject>
 		paramsDesc.add(new ApiParameterDescriptor("soid",""));		
 		handlerDescriptor.setParamsDesc(paramsDesc);	*/
 		
-		ActionURI uri = new ActionURI("", HttpMethod.POST);
+		ActionURI uri = new ActionURI(ACCOUNT_REGISTER, HttpMethod.POST);
 		handlerDescriptor.setRestApiURI(uri);
 		
 		return handlerDescriptor;		

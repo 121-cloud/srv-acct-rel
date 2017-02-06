@@ -34,7 +34,6 @@ public class BizUnitPostModifyHandler extends OtoCloudEventHandlerImpl<JsonObjec
 		d_org_role_id
 		acct_biz_unit_id
 		auth_role_id
-		is_manager
 		acct_id
 	}
 	*/

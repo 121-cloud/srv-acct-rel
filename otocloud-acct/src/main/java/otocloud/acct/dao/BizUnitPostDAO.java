@@ -49,7 +49,7 @@ public class BizUnitPostDAO extends OperatorDAO{
 	  
 	  Long userId = Long.parseLong(sessionInfo.getString("user_id"));
 		  
-	  String sql = "INSERT INTO acct_biz_unit_post(post_code,post_name,d_org_role_id,acct_biz_unit_id,auth_role_id,is_manager,acct_id,entry_id,entry_datetime)VALUES(?,?,?,?,?,?,?,?,now())"; 
+	  String sql = "INSERT INTO acct_biz_unit_post(post_code,post_name,d_org_role_id,acct_biz_unit_id,auth_role_id,acct_id,entry_id,entry_datetime)VALUES(?,?,?,?,?,?,?,now())"; 
 	  
 	  this.updateWithParams(sql, 
 		  	new JsonArray()
@@ -58,7 +58,6 @@ public class BizUnitPostDAO extends OperatorDAO{
 				  .add(department.getLong("d_org_role_id"))
 				  .add(department.getLong("acct_biz_unit_id"))
 				  .add(department.getLong("auth_role_id"))
-				  .add(department.getInteger("is_manager"))
 				  .add(department.getLong("acct_id"))				  
 				  .add(userId),  
 				  retFuture);	  
