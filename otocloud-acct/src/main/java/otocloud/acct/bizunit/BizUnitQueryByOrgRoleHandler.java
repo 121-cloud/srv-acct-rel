@@ -16,18 +16,18 @@ import otocloud.framework.core.OtoCloudEventHandlerImpl;
  * 查询指定企业账户下的业务单元列表.
  * zhangyef@yonyou.com on 2015-12-16.
  */
-public class BizUnitQueryHandler extends OtoCloudEventHandlerImpl<JsonObject> {
+public class BizUnitQueryByOrgRoleHandler extends OtoCloudEventHandlerImpl<JsonObject> {
 	
-	public static final String ADDRESS = "query";
+	public static final String ADDRESS = "query-by-orgrole";
 
-
-    public BizUnitQueryHandler(OtoCloudComponentImpl componentImpl) {
+    public BizUnitQueryByOrgRoleHandler(OtoCloudComponentImpl componentImpl) {
         super(componentImpl);
     }
 
     /* 
      * {
-     * 	  acct_id	
+     * 	  acct_id:
+     * 	  org_role_id:
      * }
      */
     @Override
@@ -36,14 +36,13 @@ public class BizUnitQueryHandler extends OtoCloudEventHandlerImpl<JsonObject> {
         JsonObject body = msg.body();
 		JsonObject content = body.getJsonObject("content");
 		
-		//JsonObject sessionInfo = msg.getSession();
-		
 		Long acctId = content.getLong("acct_id");
+		Long orgRoleId = content.getLong("org_role_id");
 
         Future<ResultSet> getFuture = Future.future();
         
         BizUnitDAO userDAO = new BizUnitDAO(this.componentImpl.getSysDatasource());
-        userDAO.getBizUnitList(acctId, getFuture);
+        userDAO.getBizUnitByOrgRole(acctId, orgRoleId, getFuture);
         
         getFuture.setHandler(ret -> {
             if (ret.succeeded()) {
@@ -58,25 +57,17 @@ public class BizUnitQueryHandler extends OtoCloudEventHandlerImpl<JsonObject> {
 
     }
 
-    /**
-     * "服务名".user-management.department.query
-     *
-     * @return
-     */
+
     @Override
     public String getEventAddress() {
         return ADDRESS;
     }
 
-    /**
-     * 注册REST API。
-     *
-     * @return get /api/"服务名"/"组件名"/departments
-     */
+
     @Override
     public HandlerDescriptor getHanlderDesc() {
         HandlerDescriptor handlerDescriptor = super.getHanlderDesc();
-        ActionURI uri = new ActionURI(ADDRESS, HttpMethod.GET);
+        ActionURI uri = new ActionURI(ADDRESS, HttpMethod.POST);
         handlerDescriptor.setRestApiURI(uri);
         return handlerDescriptor;
     }

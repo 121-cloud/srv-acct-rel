@@ -18,20 +18,25 @@ import otocloud.framework.core.OtoCloudEventHandlerImpl;
  * zhangyef@yonyou.com on 2015-12-16.
  */
 public class AppSubscribeQueryHandler extends OtoCloudEventHandlerImpl<JsonObject> {
+	
+	public static final String QUERY = "query";
 
     public AppSubscribeQueryHandler(OtoCloudComponentImpl componentImpl) {
         super(componentImpl);
     }
 
     /* 
+     * {
+     *   acct_id:
+     * }
      */
     @Override
     public void handle(OtoCloudBusMessage<JsonObject> msg) {
         
-        //JsonObject body = msg.body();
-		JsonObject sessionInfo = msg.getSession();
+        JsonObject body = msg.body();
+    	JsonObject content = body.getJsonObject("content");
 		
-		Long acctId = Long.parseLong(sessionInfo.getString("acct_id"));
+		Long acctId = content.getLong("acct_id");
 
         Future<ResultSet> getFuture = Future.future();
         
@@ -51,25 +56,17 @@ public class AppSubscribeQueryHandler extends OtoCloudEventHandlerImpl<JsonObjec
 
     }
 
-    /**
-     * "服务名".user-management.department.query
-     *
-     * @return
-     */
+
     @Override
     public String getEventAddress() {
-        return "query";
+        return QUERY;
     }
 
-    /**
-     * 注册REST API。
-     *
-     * @return get /api/"服务名"/"组件名"/departments
-     */
+
     @Override
     public HandlerDescriptor getHanlderDesc() {
         HandlerDescriptor handlerDescriptor = super.getHanlderDesc();
-        ActionURI uri = new ActionURI("", HttpMethod.GET);
+        ActionURI uri = new ActionURI(QUERY, HttpMethod.POST);
         handlerDescriptor.setRestApiURI(uri);
         return handlerDescriptor;
     }

@@ -41,6 +41,30 @@ public class BizUnitDAO extends OperatorDAO{
 	   });    	
     	
     }
+    
+    
+    public void getBizUnitByOrgRole(Long acctId, Long orgRoleId, Future<ResultSet> future) {
+        
+	   final String sql = "SELECT * FROM view_acct_biz_unit WHERE acct_id=? AND org_role_id=?";
+	   JsonArray params = new JsonArray();
+	   params.add(acctId);
+	   params.add(orgRoleId);
+	
+	   Future<ResultSet> innerFuture = Future.future();
+	
+	   this.queryWithParams(sql, params, innerFuture);
+	
+	   innerFuture.setHandler(result -> {
+	       if (result.succeeded()) {
+		       	ResultSet resultSet = result.result();
+		       	future.complete(resultSet);	
+	       } else {
+	       		Throwable err = result.cause();								
+	            future.fail(err);                
+	       }
+	   });    	
+    	
+    }
 	
 	public void create(JsonObject department, JsonObject sessionInfo, Handler<AsyncResult<UpdateResult>> done) {
 		  

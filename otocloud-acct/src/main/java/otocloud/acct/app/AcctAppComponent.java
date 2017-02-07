@@ -34,6 +34,9 @@ public class AcctAppComponent extends OtoCloudComponentImpl {
 		AppPermissionVerficationHandler appPermVerficationHandler = new AppPermissionVerficationHandler(this);
 		ret.add(appPermVerficationHandler);
 		
+		ActivityListGetHandler activityListGetHandler = new ActivityListGetHandler(this);
+		ret.add(activityListGetHandler);
+		
 		return ret;
 	}
 	

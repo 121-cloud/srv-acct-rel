@@ -315,6 +315,28 @@ public class AppSubscribeDAO extends OperatorDAO {
     	
     }
     
+    public void getActivityList(Long acct_app_id, Future<ResultSet> future) {
+        
+	   final String sql = "SELECT * FROM view_acct_activity WHERE acct_app_id=?";
+	   JsonArray params = new JsonArray();
+	   params.add(acct_app_id);
+	
+	   Future<ResultSet> innerFuture = Future.future();
+	
+	   this.queryWithParams(sql, params, innerFuture);
+	
+	   innerFuture.setHandler(result -> {
+	       if (result.succeeded()) {
+		       	ResultSet resultSet = result.result();
+		       	future.complete(resultSet);	
+	       } else {
+	       		Throwable err = result.cause();								
+	            future.fail(err);                
+	       }
+	   });    	
+    	
+    }
+    
     
     public void permissionVerify(Long acctId, Long appId, Future<Boolean> future) {
         

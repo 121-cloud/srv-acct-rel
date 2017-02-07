@@ -27,11 +27,7 @@ public class BizUnitDeleteHandler extends OtoCloudEventHandlerImpl<JsonObject> {
 		super(componentImpl);
 	}
 
-	/**
-	{
-		"id":
-	}
-	 */
+
 	@Override
 	public void handle(OtoCloudBusMessage<JsonObject> msg) {
 		JsonObject body = msg.body();

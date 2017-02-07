@@ -34,6 +34,9 @@ public class BizUnitComponent extends OtoCloudComponentImpl {
 		BizUnitDeleteHandler bizUnitDeleteHandler = new BizUnitDeleteHandler(this);
 		ret.add(bizUnitDeleteHandler);
 		
+		BizUnitQueryByOrgRoleHandler bizUnitQueryByOrgRoleHandler = new BizUnitQueryByOrgRoleHandler(this);
+		ret.add(bizUnitQueryByOrgRoleHandler);
+		
 		return ret;
 	}
 	
