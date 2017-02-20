@@ -37,6 +37,10 @@ public class AcctAppComponent extends OtoCloudComponentImpl {
 		ActivityListGetHandler activityListGetHandler = new ActivityListGetHandler(this);
 		ret.add(activityListGetHandler);
 		
+		NewAppListQueryHandler newAppListQueryHandler = new NewAppListQueryHandler(this);
+		ret.add(newAppListQueryHandler);
+
+		
 		return ret;
 	}
 	

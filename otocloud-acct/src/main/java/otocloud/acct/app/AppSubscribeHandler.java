@@ -49,7 +49,7 @@ public class AppSubscribeHandler extends OtoCloudEventHandlerImpl<JsonObject> {
 			{
 				"org_role_id": 组织商业角色
 				"unit_code":
-				"unit_code":
+				"unit_name":
 				"acct_biz_unit_post":[
 					{
 						auth_role_id：用户角色

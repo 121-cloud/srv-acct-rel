@@ -299,19 +299,7 @@ public class AppSubscribeDAO extends OperatorDAO {
 	   JsonArray params = new JsonArray();
 	   params.add(acctId);
 	
-	   Future<ResultSet> innerFuture = Future.future();
-	
-	   this.queryWithParams(sql, params, innerFuture);
-	
-	   innerFuture.setHandler(result -> {
-	       if (result.succeeded()) {
-		       	ResultSet resultSet = result.result();
-		       	future.complete(resultSet);	
-	       } else {
-	       		Throwable err = result.cause();								
-	            future.fail(err);                
-	       }
-	   });    	
+	   this.queryWithParams(sql, params, future);
     	
     }
     
@@ -321,20 +309,8 @@ public class AppSubscribeDAO extends OperatorDAO {
 	   JsonArray params = new JsonArray();
 	   params.add(acct_app_id);
 	
-	   Future<ResultSet> innerFuture = Future.future();
-	
-	   this.queryWithParams(sql, params, innerFuture);
-	
-	   innerFuture.setHandler(result -> {
-	       if (result.succeeded()) {
-		       	ResultSet resultSet = result.result();
-		       	future.complete(resultSet);	
-	       } else {
-	       		Throwable err = result.cause();								
-	            future.fail(err);                
-	       }
-	   });    	
-    	
+	   this.queryWithParams(sql, params, future);
+
     }
     
     
@@ -388,6 +364,14 @@ public class AppSubscribeDAO extends OperatorDAO {
 				retFuture);
 	}
 	
+    public void getNewAppsForAcct(Long acct_id, Future<ResultSet> future) {
+        
+	   final String sql = "SELECT * FROM view_app_version where status='A' AND id not in(select acct_app.d_app_id from acct_app where acct_app.acct_id=?)";
+	   JsonArray params = new JsonArray();
+	   params.add(acct_id);
 	
+	   this.queryWithParams(sql, params, future);	
+    	
+    }
 
 }

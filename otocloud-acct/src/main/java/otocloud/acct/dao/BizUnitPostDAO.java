@@ -26,19 +26,7 @@ public class BizUnitPostDAO extends OperatorDAO{
 	   JsonArray params = new JsonArray();
 	   params.add(bizUnitId);
 	
-	   Future<ResultSet> innerFuture = Future.future();
-	
-	   this.queryWithParams(sql, params, innerFuture);
-	
-	   innerFuture.setHandler(result -> {
-	       if (result.succeeded()) {
-		       	ResultSet resultSet = result.result();
-		       	future.complete(resultSet);	
-	       } else {
-	       		Throwable err = result.cause();								
-	            future.fail(err);                
-	       }
-	   });    	
+	   this.queryWithParams(sql, params, future);
     	
     }
 	
