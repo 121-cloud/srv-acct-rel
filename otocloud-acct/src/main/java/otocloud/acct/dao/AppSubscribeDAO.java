@@ -3,6 +3,7 @@
  */
 package otocloud.acct.dao;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,8 +12,10 @@ import otocloud.persistence.dao.JdbcDataSource;
 import otocloud.persistence.dao.OperatorDAO;
 import otocloud.persistence.dao.TransactionConnection;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.impl.CompositeFutureImpl;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.sql.ResultSet;
@@ -26,76 +29,172 @@ public class AppSubscribeDAO extends OperatorDAO {
     }
 
 	/**
-	{
-		"acct_id":
-		"d_app_id":
-		"app_version_id":
-		"app_inst": 
-		"activities":[
-			{
-				"app_activity_id":
-			}
-		]
-	}
+	[
+		{
+			"acct_id":
+			"d_app_id":
+			"app_version_id":
+			"d_app_version":
+			"is_platform": false/true
+			"app_inst_group": 
+			"activities":[
+				{
+					"app_activity_id":
+				}
+			]
+		}
+	]
 	*/
 	public void subscribeApp(TransactionConnection conn,
-			JsonObject subscribeInfo, JsonObject sessionInfo,
-			Handler<AsyncResult<Map<Long, Long>>> done) {
+			JsonArray subscribeInfos, JsonObject sessionInfo,
+			Handler<AsyncResult<Void>> done) {
 		
 		SQLConnection realConn = conn.getConn();
-
-		Long userId = Long.parseLong(sessionInfo.getString("user_id"));
-		Long acctId = subscribeInfo.getLong("acct_id");
-		Long appId = subscribeInfo.getLong("d_app_id");
-		Long appVerId = subscribeInfo.getLong("app_version_id");
-		String appInst = subscribeInfo.getString("app_inst");
-
-		Future<Map<Long, Long>> retFuture = Future.future();
+		
+		Future<Void> retFuture = Future.future();
 		retFuture.setHandler(done);
 		
-		Map<Long, Long> activityMap = new HashMap<Long, Long>();
+		List<Future> futures = new ArrayList<Future>();
+	  
+		subscribeInfos.forEach(item->{	
+			JsonObject subscribeInfo = (JsonObject)item;
+		  
+			Future<Void> itemFuture = Future.future();
+			futures.add(itemFuture);		
 
-		String sql1 = "INSERT INTO acct_app(acct_id,d_app_id,app_version_id,app_inst,entry_id,entry_datetime)VALUES(?,?,?,?,?,now())";
-		String sql2 = "INSERT INTO acct_app_activity(acct_app_id,d_app_id,app_activity_id,acct_id,entry_id,entry_datetime)VALUES(?,?,?,?,?,now())";
+			Long userId = Long.parseLong(sessionInfo.getString("user_id"));
+			Long acctId = subscribeInfo.getLong("acct_id");
+			Long appId = subscribeInfo.getLong("d_app_id");
+			Long appVerId = subscribeInfo.getLong("app_version_id");
+			String d_app_version = subscribeInfo.getString("d_app_version");
+			String appInst = subscribeInfo.getString("app_inst_group", "");
+			Boolean is_platform = subscribeInfo.getBoolean("is_platform", true);
 
-		  realConn.updateWithParams(sql1, 
-				  	new JsonArray()
-						  .add(acctId)
-						  .add(appId)
-						  .add(appVerId)
-						  .add(appInst)
-						  .add(userId),  
-			  ret -> {		
-				  if(ret.succeeded()){
-					  UpdateResult updateRet = ret.result();
-					  //JsonObject acctResult = new JsonObject(); 
-					  Long id = updateRet.getKeys().getLong(0);	
-					  subscribeInfo.put("id", id);
-					  
-					  JsonArray activities = subscribeInfo.getJsonArray("activities", null);
-					  if(activities == null || activities.size() == 0){
-						  retFuture.complete(activityMap);
-					  }else{					  
-						  Future<Void> depFuture = Future.future();
+			
+			Map<Long, Long> activityMap = new HashMap<Long, Long>();
+			
+			String sql0  = "select id from acct_app where acct_id=? and d_app_id=?";
+	
+			String sql1 = "INSERT INTO acct_app(acct_id,d_app_id,app_version_id,d_app_version,app_inst_group,status,entry_id,entry_datetime)VALUES(?,?,?,?,?,?,?,now())";
+			String sql2 = "INSERT INTO acct_app_activity(acct_app_id,d_app_id,app_activity_id,acct_id,entry_id,entry_datetime)VALUES(?,?,?,?,?,now())";
+
+			  realConn.queryWithParams(sql0, 
+					  	new JsonArray()
+							  .add(acctId)
+							  .add(appId),
+				  existAppRet -> {		
+					  if(existAppRet.succeeded()){
 						  
-						  subscribeActivity(conn, activityMap, userId, acctId, appId, id, sql2, activities, activities.size(), 0, depFuture);
-						  
-						  depFuture.setHandler(subscribeActivityRet->{
-							  if(subscribeActivityRet.succeeded()){
-								  retFuture.complete(activityMap);
-							  }else{
-								  Throwable err = subscribeActivityRet.cause();
-								  retFuture.fail(err);
+						  ResultSet appRet = existAppRet.result();
+						  List<JsonObject> rows = appRet.getRows();
+						  if(rows != null && rows.size() > 0){
+							  Long id = rows.get(0).getLong("id");	
+							  subscribeInfo.put("id", id);
+							  
+							  JsonArray activities = subscribeInfo.getJsonArray("activities", null);
+							  if(activities == null || activities.size() == 0){
+								  itemFuture.complete();
+							  }else{					  
+								  Future<Void> depFuture = Future.future();
+								  
+								  subscribeActivity(conn, activityMap, userId, acctId, appId, id, sql2, activities, activities.size(), 0, depFuture);
+								  
+								  depFuture.setHandler(subscribeActivityRet->{
+									  if(subscribeActivityRet.succeeded()){
+										  itemFuture.complete();
+									  }else{
+										  Throwable err = subscribeActivityRet.cause();
+										  err.printStackTrace();
+										  itemFuture.fail(err);
+									  }
+								  });	
 							  }
-						  });	
-					  }
+							  
+						  }else{						  
 
-				  }else{
-					  Throwable err = ret.cause();
-					  err.printStackTrace();
-					  retFuture.fail(err);
-				  }
-			  }); 
+								String status = "A";
+								if(appInst == null || appInst.isEmpty()){
+									if(!is_platform){
+										status = "U";
+									}
+								}			
+						  
+								  realConn.updateWithParams(sql1, 
+										  	new JsonArray()
+												  .add(acctId)
+												  .add(appId)
+												  .add(appVerId)
+												  .add(d_app_version)
+												  .add(appInst)
+												  .add(status)
+												  .add(userId),  
+									  ret -> {		
+										  if(ret.succeeded()){
+											  UpdateResult updateRet = ret.result();
+											  //JsonObject acctResult = new JsonObject(); 
+											  Long id = updateRet.getKeys().getLong(0);	
+											  subscribeInfo.put("id", id);
+											  
+											  JsonArray activities = subscribeInfo.getJsonArray("activities", null);
+											  if(activities == null || activities.size() == 0){
+												  itemFuture.complete();
+											  }else{					  
+												  Future<Void> depFuture = Future.future();
+												  
+												  subscribeActivity(conn, activityMap, userId, acctId, appId, id, sql2, activities, activities.size(), 0, depFuture);
+												  
+												  depFuture.setHandler(subscribeActivityRet->{
+													  if(subscribeActivityRet.succeeded()){
+														  itemFuture.complete();
+													  }else{
+														  Throwable err = subscribeActivityRet.cause();
+														  err.printStackTrace();
+														  itemFuture.fail(err);
+													  }
+												  });	
+											  }
+						
+										  }else{
+											  Throwable err = ret.cause();
+											  err.printStackTrace();
+											  itemFuture.fail(err);
+										  }
+									  }); 
+						  }	  
+						  
+						  
+					  }else{
+						  Throwable err = existAppRet.cause();
+						  err.printStackTrace();
+						  itemFuture.fail(err);
+					  }
+				  });
+			
+			
+
+		});
+		
+		
+		CompositeFuture.join(futures).setHandler(ar -> { // 合并所有for循环结果，返回外面					
+			CompositeFutureImpl comFutures = (CompositeFutureImpl)ar;
+			if(comFutures.size() > 0){										
+				for(int i=0;i<comFutures.size();i++){
+					if(comFutures.succeeded(i)){								
+					}else{
+						  Throwable err = comFutures.cause();
+						  retFuture.fail(err);
+						  return;
+					}
+				}
+				retFuture.complete();
+			}else{
+				retFuture.complete();
+			}
+
+		}); 
+	  		
+		
+		
 	}
 	
 	//INSERT INTO acct_app_activity(acct_app_id,d_app_id,app_activity_id,acct_id,entry_id,entry_datetime)VALUES(?,?,?,?,?,now())	
@@ -349,24 +448,99 @@ public class AppSubscribeDAO extends OperatorDAO {
 	}
 
 
-	public void appUnSubscribe(Long id, JsonObject sessionInfo,
+	public void appUnSubscribe(TransactionConnection conn, Long acct_app_id, 
 			Handler<AsyncResult<UpdateResult>> done) {
-
-		Future<UpdateResult> retFuture = Future.future();
-		retFuture.setHandler(done);
 		
-		Long userId = Long.parseLong(sessionInfo.getString("user_id"));
+	    Future<UpdateResult> innerFuture = Future.future();
+	    innerFuture.setHandler(done);
+		
+		SQLConnection realConn = conn.getConn();
+		
+		String sqlStatement1 = "delete from acct_biz_unit_post_activity where d_acct_app_id=?";
+		
+		String sqlStatement2 = "delete from acct_app_activity where acct_app_id=?";
 
-		String sql = "UPDATE acct_app SET status='D',update_id=?,update_datetime=now() WHERE id=?";
+		String sqlStatement3 = "delete from acct_app where id=?";
 
-		this.updateWithParams(sql,
-				new JsonArray().add(userId).add(id),
-				retFuture);
+		
+		JsonArray arg1 = new JsonArray();
+		arg1.add(acct_app_id);
+	
+		realConn.updateWithParams(sqlStatement1, arg1, handler1->{			
+			  if(handler1.succeeded()){    	
+				  realConn.updateWithParams(sqlStatement2, arg1, handler2->{						
+					  if(handler2.succeeded()){    	
+						  realConn.updateWithParams(sqlStatement3, arg1, handler3->{						
+							  if(handler3.succeeded()){								  
+								  UpdateResult ret = handler3.result();								  
+								  innerFuture.complete(ret);					
+							  }else{
+								  Throwable err = handler3.cause();
+								  err.printStackTrace();							  
+								  innerFuture.fail(err);
+							  }							
+						});	
+					  }else{
+						  Throwable err = handler2.cause();
+						  err.printStackTrace();						  
+						  innerFuture.fail(err);
+					  }					
+				});
+			  }else{
+				  Throwable err = handler1.cause();
+				  err.printStackTrace();
+				  innerFuture.fail(err);
+			  }
+			
+		});
+
+	}
+	
+	public void activityUnSubscribe(TransactionConnection conn, Long acct_app_activity_id, 
+			Handler<AsyncResult<UpdateResult>> done) {
+		
+	    Future<UpdateResult> innerFuture = Future.future();
+	    innerFuture.setHandler(done);
+
+		
+		SQLConnection realConn = conn.getConn();
+		
+		String sqlStatement1 = "delete from acct_biz_unit_post_activity where acct_app_activity_id=?";
+		
+		String sqlStatement2 = "delete from acct_app_activity where id=?";
+
+		
+		JsonArray arg1 = new JsonArray();
+		arg1.add(acct_app_activity_id);
+	
+		realConn.updateWithParams(sqlStatement1, arg1, handler1->{			
+			  if(handler1.succeeded()){    	
+				  realConn.updateWithParams(sqlStatement2, arg1, handler2->{						
+					  if(handler2.succeeded()){    	
+						  UpdateResult ret = handler2.result();								  
+						  innerFuture.complete(ret);
+					  }else{
+						  Throwable err = handler2.cause();
+						  err.printStackTrace();						  
+						  innerFuture.fail(err);
+					  }					
+				});
+			  }else{
+				  Throwable err = handler1.cause();
+				  err.printStackTrace();
+				  innerFuture.fail(err);
+			  }
+			
+		});
+
+
 	}
 	
     public void getNewAppsForAcct(Long acct_id, Future<ResultSet> future) {
         
-	   final String sql = "SELECT * FROM view_app_version where status='A' AND id not in(select acct_app.d_app_id from acct_app where acct_app.acct_id=?)";
+	   String sql = "SELECT view_app_version.* FROM view_app_version inner join "
+	   		+ "(SELECT distinct app_id FROM app_activity WHERE id not in(select app_activity_id from acct_app_activity where acct_id=?)) as a"
+	   		+ " on view_app_version.id=a.app_id";
 	   JsonArray params = new JsonArray();
 	   params.add(acct_id);
 	

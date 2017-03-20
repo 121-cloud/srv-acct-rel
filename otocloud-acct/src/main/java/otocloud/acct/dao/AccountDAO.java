@@ -3,14 +3,17 @@
  */
 package otocloud.acct.dao;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import otocloud.persistence.dao.JdbcDataSource;
 import otocloud.persistence.dao.OperatorDAO;
 import otocloud.persistence.dao.TransactionConnection;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.impl.CompositeFutureImpl;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.sql.ResultSet;
@@ -38,8 +41,11 @@ public class AccountDAO extends OperatorDAO {
 	  
 	  String sql1 = "INSERT INTO acct(acct_code,acct_name,acct_type,status,entry_id,entry_datetime)VALUES(?,?,?,?,?,now())";
 	  String sql2 = "INSERT INTO acct_org_info(id,industry_code,ownership_code,area_code,address,invitation_code,tel,email,website_url,description,entry_id,entry_datetime)VALUES(?,?,?,?,?,?,?,?,?,?,?,now())";
+	  
+	  //添加IT管理业务单元
 	  String sql3 = "INSERT INTO acct_biz_unit(unit_code,unit_name,acct_id,org_role_id,entry_id,entry_datetime)VALUES('IT','IT部门',?,1,?,now())";
 	  String sql4 = "INSERT INTO acct_biz_unit_post(post_code,post_name,d_org_role_id,acct_biz_unit_id,auth_role_id,acct_id,entry_id,entry_datetime)VALUES('IT001','IT管理员',1,?,1,?,?,now())";
+	  
 
 	  realConn.updateWithParams(sql1, 
 		  	new JsonArray()
@@ -93,7 +99,16 @@ public class AccountDAO extends OperatorDAO {
     		    	    		    	    		    				  acctResult.put("mgr_post_id", postRet);
     		    	    		    	    		    				  acctResult.put("auth_role_id", 1L); //IT管理员固定角色ID
     		    	    		    	    		    				  
-    		    						    		    				  retFuture.complete(acctResult);
+    		    	    		    	    		    				  subscribeDefaultApps(realConn, accId, postRet, userId, subDeaultAppsRet->{
+    		    	    		    	    		    					  if(subDeaultAppsRet.succeeded()){ 
+    		    	    		    	    		    						  retFuture.complete(acctResult);
+    		    	    		    	    		    					  }else{
+    	    		    	    		    	    		    				  Throwable err = subDeaultAppsRet.cause();
+    	    		    	    		    	    		    				  err.printStackTrace();
+    	    		    	    		    	    		    				  retFuture.fail(err);
+    	    		    	    		    	    		    			  }
+    		    	    		    	    		    				  });    		    	    		    	    		    				  
+    		    						    		    				  //retFuture.complete(acctResult);
     		    	    		    	    		    			  }else{
     		    	    		    	    		    				  Throwable err = ret4.cause();
     		    	    		    	    		    				  err.printStackTrace();
@@ -114,6 +129,118 @@ public class AccountDAO extends OperatorDAO {
 	    				  retFuture.fail(err);
 	    			  }
 	    		  });
+		  }else{
+			  Throwable err = ret.cause();
+			  err.printStackTrace();
+			  retFuture.fail(err);
+		  }
+	  }); 
+	}
+	
+	public void subscribeDefaultApps(SQLConnection realConn, Long acctId, Long adminPost, Long userId, Handler<AsyncResult<Void>> done) {
+	  
+	  Long appId = 10L;
+	  
+	  //默认订阅企业空间APP
+	  String appSql = "INSERT INTO acct_app(acct_id,d_app_id,app_version_id,d_app_version,status,entry_id,entry_datetime)VALUES(?,10,10,'1.0.0-SNAPSHOT','A',?,now())";
+
+	  //添加企业空间APP的业务活动，并分配给IT管理员岗位
+	  List<JsonObject> app_activity_ids = new ArrayList<>();
+	  app_activity_ids.add(new JsonObject().put("activity_id", 23L).put("activity_code", "my-app-subscribe"));
+	  app_activity_ids.add(new JsonObject().put("activity_id", 24L).put("activity_code", "my-account-mgr"));
+	  app_activity_ids.add(new JsonObject().put("activity_id", 25L).put("activity_code", "my-bizunit"));
+	  app_activity_ids.add(new JsonObject().put("activity_id", 26L).put("activity_code", "my-bizunit-post"));
+	  app_activity_ids.add(new JsonObject().put("activity_id", 27L).put("activity_code", "my-user"));
+
+	  
+	  Future<Void> retFuture = Future.future();
+	  retFuture.setHandler(done);
+
+
+	  realConn.updateWithParams(appSql, 
+		  	new JsonArray()
+	  			  .add(acctId)
+				  .add(userId),  
+	  ret -> {		
+		  if(ret.succeeded()){
+			  UpdateResult updateRet = ret.result();			  
+			  Long acct_app_id = updateRet.getKeys().getLong(0);		
+			  
+			  List<Future> futures = new ArrayList<Future>();
+			  
+			  app_activity_ids.forEach(app_activity->{	
+				  
+				  	Long app_activity_id = app_activity.getLong("activity_id");
+				  	String app_activity_code = app_activity.getString("activity_code");
+				  
+				  
+					Future<Void> itemFuture = Future.future();
+					futures.add(itemFuture);
+					
+					  String activitySql = "INSERT INTO acct_app_activity(acct_app_id,d_app_id,app_activity_id,acct_id,entry_id,entry_datetime)VALUES(?,?,?,?,?,now())";
+					  realConn.updateWithParams(activitySql, 
+						  	new JsonArray()
+						  		.add(acct_app_id)
+						  		.add(appId)
+						  		.add(app_activity_id)
+						  		.add(acctId)
+						  		.add(userId),
+	    		    		  ret2 -> {		
+	    		    			  if(ret2.succeeded()){
+	    		    				  UpdateResult updateRet2 = ret2.result();			  
+	    		    				  Long acct_app_activity_id = updateRet2.getKeys().getLong(0);		
+	    		    				  
+	    		  					  String assignPostSql = "INSERT INTO acct_biz_unit_post_activity(acct_biz_unit_post_id,acct_app_activity_id,acct_id,d_app_id,d_app_activity_id,d_app_activity_code,entry_id,entry_datetime)VALUES(?,?,?,?,?,?,?,now())";
+	    							  realConn.updateWithParams(assignPostSql, 
+	    								  	new JsonArray()
+	    							  			.add(adminPost)
+	    							  			.add(acct_app_activity_id)
+	    							  			.add(acctId)
+	    							  			.add(appId)	    								  		    								  		
+	    								  		.add(app_activity_id)
+	    								  		.add(app_activity_code)
+	    								  		.add(userId),
+	    			    		    		  ret3 -> {		
+	    			    		    			  if(ret3.succeeded()){    		    				  
+	    			    		    				  itemFuture.complete();				    				  
+	    						    			  }else{
+	    						    				  Throwable err = ret3.cause();
+	    						    				  err.printStackTrace();
+	    						    				  itemFuture.fail(err);
+	    						    			  }
+	    			    		    		  });    				  
+				    			  }else{
+				    				  Throwable err = ret2.cause();
+				    				  err.printStackTrace();
+				    				  itemFuture.fail(err);
+				    			  }
+	    		    		  });
+
+				  
+				  
+			  });
+			  
+				CompositeFuture.join(futures).setHandler(ar -> { // 合并所有for循环结果，返回外面					
+					CompositeFutureImpl comFutures = (CompositeFutureImpl)ar;
+					if(comFutures.size() > 0){										
+						for(int i=0;i<comFutures.size();i++){
+							if(comFutures.succeeded(i)){								
+							}else{
+								  Throwable err = comFutures.cause();
+								  err.printStackTrace();
+								  retFuture.fail(err);
+								  return;
+							}
+						}
+						retFuture.complete();
+					}else{
+						retFuture.complete();
+					}
+
+				}); 
+			  
+			  
+
 		  }else{
 			  Throwable err = ret.cause();
 			  err.printStackTrace();

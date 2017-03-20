@@ -16,27 +16,22 @@ import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.sql.SQLConnection;
 
 
-public class AppUnSubscribeHandler extends OtoCloudEventHandlerImpl<JsonObject> {
+public class ActivityUnSubscribeHandler extends OtoCloudEventHandlerImpl<JsonObject> {
 
-	public static final String DEP_DELETE = "delete";
+	public static final String DEP_DELETE = "activity-delete";
 
 	/**
 	 * Constructor.
 	 *
 	 * @param componentImpl
 	 */
-	public AppUnSubscribeHandler(OtoCloudComponentImpl componentImpl) {
+	public ActivityUnSubscribeHandler(OtoCloudComponentImpl componentImpl) {
 		super(componentImpl);
 	}
 
 	/**
 	{
-		"is_platform":
-		"app_code":
-		"app_inst_group":
-		"acct_id":
-		
-		"acct_app_id":
+		"acct_app_activity_id":
 	}
 	 */
 	@Override
@@ -46,13 +41,8 @@ public class AppUnSubscribeHandler extends OtoCloudEventHandlerImpl<JsonObject> 
 		JsonObject subscribeInfo = body.getJsonObject("content");
 		//JsonObject sessionInfo = msg.getSession();		
 		
-		Long acct_app_id = subscribeInfo.getLong("acct_app_id");
+		Long acct_app_activity_id = subscribeInfo.getLong("acct_app_activity_id");
 		//Long acct_id = subscribeInfo.getLong("acct_id");
-		
-		Long acct_id = subscribeInfo.getLong("acct_id");
-		String app_code = subscribeInfo.getString("app_code");
-		String app_inst_group = subscribeInfo.getString("app_inst_group", "");
-		Boolean is_platform = subscribeInfo.getBoolean("is_platform", true);
 		
 		
 		JDBCClient jdbcClient = componentImpl.getSysDatasource().getSqlClient();
@@ -64,27 +54,34 @@ public class AppUnSubscribeHandler extends OtoCloudEventHandlerImpl<JsonObject> 
 						TransactionConnection transConn = transConnRet.result();
 						AppSubscribeDAO appSubscribeDAO = new AppSubscribeDAO(componentImpl.getSysDatasource());
 						//订购应用
-						appSubscribeDAO.appUnSubscribe(transConn, acct_app_id, appSubscribeRet->{
+						appSubscribeDAO.activityUnSubscribe(transConn, acct_app_activity_id, appSubscribeRet->{
 							if(appSubscribeRet.succeeded()){	
 								//Map<Long, Long> activityMap = appSubscribeRet.result();
 								transConn.commitAndClose(closedRet->{
 									
 									msg.reply(appSubscribeRet.result().toJson());
 									
-									if(!is_platform){							
-									
-										//停用账户应用实例											
-										String srvAddress = app_code + "." + app_inst_group + ".platform.appinst_status.control"; 
-											
-										JsonObject instLoadMsg = new JsonObject()
-											.put("account", acct_id.toString())
-											.put("status", "stop");
-	
-										componentImpl.getEventBus().publish(srvAddress,
-												instLoadMsg);	  
+									//应用引擎加载账户应用实例												
+/*									String rfbSrvAddress = appInst + ".platform.app_inst.load"; 
 										
-									}
+									JsonObject instLoadMsg = new JsonObject()
+										.put("acct_id", acctId)
+										.put("app_version_id", appVerId);
 
+									componentImpl.getEventBus().send(rfbSrvAddress,
+											instLoadMsg, createInstRet->{
+												if(createInstRet.succeeded()){
+																				
+													msg.reply(subscribeInfo);
+												}else{		
+													Throwable err = createInstRet.cause();	
+													String errMsg = err.getMessage();
+													componentImpl.getLogger().error(errMsg,err);																	
+													msg.fail(400, errMsg);
+												}	
+												
+									});	*/
+									
 								});
 
 							}else{
