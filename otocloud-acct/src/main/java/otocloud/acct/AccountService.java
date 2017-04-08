@@ -9,6 +9,7 @@ import java.util.List;
 import otocloud.acct.app.AcctAppComponent;
 import otocloud.acct.baseinfo.AccountManagerComponent;
 import otocloud.acct.bizunit.BizUnitComponent;
+import otocloud.acct.relation.AcctRelationComponent;
 import otocloud.framework.core.OtoCloudComponent;
 import otocloud.framework.core.OtoCloudServiceForVerticleImpl;
 
@@ -37,6 +38,9 @@ public class AccountService extends OtoCloudServiceForVerticleImpl {
 		
 		BizUnitComponent bizUnitComponent = new BizUnitComponent();
 		components.add(bizUnitComponent);
+		
+		AcctRelationComponent acctRelationComponent = new AcctRelationComponent();
+		components.add(acctRelationComponent);		
 				
 		return components;
 	}  
