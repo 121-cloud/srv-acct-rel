@@ -81,7 +81,29 @@ public class AppUnSubscribeHandler extends OtoCloudEventHandlerImpl<JsonObject> 
 											.put("status", "stop");
 	
 										componentImpl.getEventBus().publish(srvAddress,
-												instLoadMsg);	  
+												instLoadMsg);	
+										
+										
+										//通知删除用户的功能菜单缓存
+										String portal_service = componentImpl.getDependencies().getJsonObject("portal_service").getString("service_name","");
+										String address = portal_service + ".acct-menu-del.delete";
+
+										JsonObject contentObject = new JsonObject().put("acct_id", acct_id.toString());
+										 
+										JsonObject commandObject = new JsonObject().put("content", contentObject);
+										
+										componentImpl.getEventBus().send(address,
+												commandObject, cleanUserMenuRet->{
+													if(cleanUserMenuRet.succeeded()){
+						
+													}else{		
+														Throwable err = cleanUserMenuRet.cause();						
+														String errMsg = err.getMessage();
+														componentImpl.getLogger().error(errMsg, err);								
+														
+													}	
+													
+										});	
 										
 									}
 

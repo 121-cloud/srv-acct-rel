@@ -60,6 +60,7 @@ public class AppSubscribeHandler extends OtoCloudEventHandlerImpl<JsonObject> {
 		JsonArray subscribeInfos = body.getJsonArray("content");
 		JsonObject sessionInfo = msg.getSession();		
 		
+		Long acctId = subscribeInfos.getJsonObject(0).getLong("acct_id");
 		
 		//Long acctId = subscribeInfo.getLong("acct_id");
 		//Long appId = subscribeInfo.getLong("d_app_id");
@@ -80,9 +81,30 @@ public class AppSubscribeHandler extends OtoCloudEventHandlerImpl<JsonObject> {
 						appSubscribeDAO.subscribeApp(transConn, subscribeInfos, sessionInfo, appSubscribeRet->{
 							if(appSubscribeRet.succeeded()){	
 								//Map<Long, Long> activityMap = appSubscribeRet.result();
-								transConn.commitAndClose(closedRet->{
+								transConn.commitAndClose(closedRet->{	
 									
-									msg.reply(subscribeInfos);									
+									msg.reply(subscribeInfos);		
+									
+									//通知删除用户的功能菜单缓存
+									String portal_service = componentImpl.getDependencies().getJsonObject("portal_service").getString("service_name","");
+									String address = portal_service + ".acct-menu-del.delete";
+
+									JsonObject contentObject = new JsonObject().put("acct_id", acctId.toString());
+									 
+									JsonObject commandObject = new JsonObject().put("content", contentObject);
+									
+									componentImpl.getEventBus().send(address,
+											commandObject, cleanUserMenuRet->{
+												if(cleanUserMenuRet.succeeded()){
+					
+												}else{		
+													Throwable err = cleanUserMenuRet.cause();						
+													String errMsg = err.getMessage();
+													componentImpl.getLogger().error(errMsg, err);								
+													
+												}	
+												
+									});					
 
 								});
 
