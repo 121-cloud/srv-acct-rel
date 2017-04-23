@@ -8,7 +8,7 @@ import otocloud.acct.dao.AppSubscribeDAO;
 import otocloud.common.ActionURI;
 import otocloud.framework.common.IgnoreAuthVerify;
 import otocloud.framework.core.HandlerDescriptor;
-import otocloud.framework.core.OtoCloudBusMessage;
+import otocloud.framework.core.CommandMessage;
 import otocloud.framework.core.OtoCloudComponentImpl;
 import otocloud.framework.core.OtoCloudEventHandlerImpl;
 
@@ -64,7 +64,7 @@ public class ActivityListGetHandler extends OtoCloudEventHandlerImpl<JsonObject>
 	 */
 	//处理器
 	@Override
-	public void handle(OtoCloudBusMessage<JsonObject> msg) {
+	public void handle(CommandMessage<JsonObject> msg) {
 		
 		Long acct_app_id = msg.body().getJsonObject("content").getLong("acct_app_id");
 		

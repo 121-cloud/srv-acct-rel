@@ -6,7 +6,7 @@ package otocloud.acct.baseinfo;
 import otocloud.acct.dao.AccountDAO;
 import otocloud.common.ActionURI;
 import otocloud.framework.core.HandlerDescriptor;
-import otocloud.framework.core.OtoCloudBusMessage;
+import otocloud.framework.core.CommandMessage;
 import otocloud.framework.core.OtoCloudComponentImpl;
 import otocloud.framework.core.OtoCloudEventHandlerImpl;
 import otocloud.persistence.dao.TransactionConnection;
@@ -50,14 +50,14 @@ public class AccountModifyHandler extends OtoCloudEventHandlerImpl<JsonObject> {
 		}
 	 */
 	@Override
-	public void handle(OtoCloudBusMessage<JsonObject> msg) {
-		JsonObject body = msg.body();
+	public void handle(CommandMessage<JsonObject> msg) {
+		//JsonObject body = msg.body();
 		
-		componentImpl.getLogger().info(body.toString());
+		//componentImpl.getLogger().info(body.toString());
 		
 		//JsonObject params = body.getJsonObject("queryParams");
 		
-		JsonObject acctRegInfo = body.getJsonObject("content");
+		JsonObject acctRegInfo = msg.getContent(); //.getJsonObject("content");
 		JsonObject sessionInfo = msg.getSession();
 		
 		Long accId = Long.parseLong(sessionInfo.getString("acct_id"));

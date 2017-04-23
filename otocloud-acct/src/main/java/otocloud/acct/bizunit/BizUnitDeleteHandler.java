@@ -6,7 +6,7 @@ package otocloud.acct.bizunit;
 import otocloud.acct.dao.BizUnitDAO;
 import otocloud.common.ActionURI;
 import otocloud.framework.core.HandlerDescriptor;
-import otocloud.framework.core.OtoCloudBusMessage;
+import otocloud.framework.core.CommandMessage;
 import otocloud.framework.core.OtoCloudComponentImpl;
 import otocloud.framework.core.OtoCloudEventHandlerImpl;
 import io.vertx.core.http.HttpMethod;
@@ -29,7 +29,7 @@ public class BizUnitDeleteHandler extends OtoCloudEventHandlerImpl<JsonObject> {
 
 
 	@Override
-	public void handle(OtoCloudBusMessage<JsonObject> msg) {
+	public void handle(CommandMessage<JsonObject> msg) {
 		JsonObject body = msg.body();
 		
 		componentImpl.getLogger().info(body.toString());

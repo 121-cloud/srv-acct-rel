@@ -7,7 +7,7 @@ import io.vertx.ext.sql.ResultSet;
 import otocloud.acct.dao.AccountDAO;
 import otocloud.common.ActionURI;
 import otocloud.framework.core.HandlerDescriptor;
-import otocloud.framework.core.OtoCloudBusMessage;
+import otocloud.framework.core.CommandMessage;
 import otocloud.framework.core.OtoCloudComponentImpl;
 import otocloud.framework.core.OtoCloudEventHandlerImpl;
 
@@ -40,10 +40,10 @@ public class AccountQueryHandler extends OtoCloudEventHandlerImpl<JsonObject> {
      * 
      */
     @Override
-    public void handle(OtoCloudBusMessage<JsonObject> msg) {
+    public void handle(CommandMessage<JsonObject> msg) {
 
-        JsonObject body = msg.body();
-        JsonObject content = body.getJsonObject("content");
+        //JsonObject body = msg.body();
+        JsonObject content = msg.getContent(); //.getJsonObject("content");
 
         //Long acctId = content.getLong("acct_id");
         //Long bizUnitId = content.getLong("biz_unit_id");
